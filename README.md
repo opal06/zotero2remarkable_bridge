@@ -25,7 +25,7 @@ Do not remove these tags as they are used to determine which files should be syn
 On the ReMarkable, the program uses folders to keep track of files. Unfortunately, there
 is no tag system on ReMarkable, so that is the best way I could come up with.
 
-The program uses rmrl to render files from ReMarkable, but adds support for post v2.7 highlights as
+The program uses [rmrl](https://github.com/rschroll/rmrl) to render files from ReMarkable, but adds support for post v2.7 highlights as
 propper PDF annotations. Colors are also supported. Yet, because of the way these highlights
 are generated, some highlights may be missing in the export. The program will generate warnings for those.
 
