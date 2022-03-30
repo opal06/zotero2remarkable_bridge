@@ -32,7 +32,8 @@ def load_config(config_file):
             config_dict = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
-    zot = zotero.Zotero(config_dict["LIBRARY_ID"], config_dict["LIBRARY_TYPE"], config_dict["API_KEY"]) 
+    zot = zotero.Zotero(config_dict["LIBRARY_ID"], config_dict["LIBRARY_TYPE"], config_dict["API_KEY"])
+    folders = {"unread": config_dict["UNREAD_FOLDER"], "read": config_dict["READ_FOLDER"]}
     if config_dict["USE_WEBDAV"] == "True":
         webdav_data = {
             "webdav_hostname": config_dict["WEBDAV_HOSTNAME"],
@@ -43,12 +44,14 @@ def load_config(config_file):
         webdav = wdClient(webdav_data)
     else:
         webdav = False
-    return (zot, webdav)
+    return (zot, webdav, folders)
     
 
 def write_config(file_name):
     config_data = {}
     input("Couldn't find config file. Let's create one! Press Enter to continue...")
+    config_data["UNREAD_FOLDER"] = input("Which ReMarkable folder should files be synced to?")
+    config_data["READ_FOLDER"] = input("Which ReMarkable folder should files be synced from?")
     config_data["LIBRARY_ID"] = input("Enter Zotero library ID: ")
     config_data["LIBRARY_TYPE"] = input("Enter Zotero library type (user/group): ")
     config_data["API_KEY"] = input("Enter Zotero API key: ")
@@ -78,7 +81,7 @@ def get_scale(page_rect):
     return scale
 
 
-def sync_to_rm(item, zot, rm):
+def sync_to_rm(item, zot, rm, folders):
     temp_path = Path(tempfile.gettempdir())
     item_id = item["key"]
     attachments = zot.children(item_id)
@@ -98,7 +101,7 @@ def sync_to_rm(item, zot, rm):
                 
             # Get the folder ID for upload dir
             parent_id = str([p for p in rm.get_meta_items() if p.VissibleName == "Zotero"][0]).strip("<>").split(" ")[1]
-            folder_id = [f for f in rm.get_meta_items() if f.VissibleName == "Ungelesen" and f.Parent == parent_id][0]
+            folder_id = [f for f in rm.get_meta_items() if f.VissibleName == folders["unread"] and f.Parent == parent_id][0]
     
             # Upload to reMarkable and set tag in Zotero
             rm.upload(raw_document, folder_id)
@@ -109,7 +112,7 @@ def sync_to_rm(item, zot, rm):
             print("Found attachment, but it's not a PDF, skipping...")
         
        
-def sync_to_rm_webdav(item, zot, rm, webdav):
+def sync_to_rm_webdav(item, zot, rm, webdav, folders):
     temp_path = Path(tempfile.gettempdir())
     item_id = item["key"]
     attachments = zot.children(item_id)
@@ -138,7 +141,7 @@ def sync_to_rm_webdav(item, zot, rm, webdav):
     
             # Get the folder ID for upload dir
             parent_id = str([f for f in rm.get_meta_items() if f.VissibleName == "Zotero"][0]).strip("<>").split(" ")[1]
-            folder_id = [e for e in rm.get_meta_items() if e.VissibleName == "Ungelesen" and e.Parent == parent_id][0]
+            folder_id = [e for e in rm.get_meta_items() if e.VissibleName == folders["unread"] and e.Parent == parent_id][0]
     
             # Upload to reMarkable and set tag in Zotero
             rm.upload(raw_document, folder_id)

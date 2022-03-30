@@ -13,10 +13,10 @@ def main(argv):
     rm = Client()
     check_auth(rm)
     if config_path.exists():
-        zot, webdav = load_config("config.yml")
+        zot, webdav, folders = load_config("config.yml")
     else:
         write_config("config.yml")
-        zot, webdav = load_config("config.yml")
+        zot, webdav, folders = load_config("config.yml")
     
     try:
         opts, args = getopt.getopt(argv, "m:")
@@ -32,9 +32,9 @@ def main(argv):
                 print("Found " + str(len(zot.items(tag="to_sync"))) + " elements to sync...") 
                 for item in tqdm(zot.items(tag="to_sync")):
                     if webdav: 
-                        sync_to_rm_webdav(item, zot, rm, webdav)
+                        sync_to_rm_webdav(item, zot, rm, webdav, folders)
                     else:
-                        sync_to_rm(item, zot, rm)
+                        sync_to_rm(item, zot, rm, folders)
                 zot.delete_tags("to_sync")
 
             elif arg == "pull":
@@ -43,7 +43,7 @@ def main(argv):
                 red_list = get_sync_status(zot)
                 for entity in tqdm(rm.get_meta_items()):
                     if entity.VissibleName + ".pdf" not in red_list:
-                        result = get_from_rm(entity, rm, "Gelesen")
+                        result = get_from_rm(entity, rm, folders["read"])
                         if result:
                             content_id, pdf_name = result
                             add_highlights_simple(entity, content_id, pdf_name)
@@ -60,9 +60,9 @@ def main(argv):
                 # Upload...
                 for item in tqdm(zot.items(tag="to_sync")):
                     if webdav:
-                        sync_to_rm_webdav(item, zot, rm, webdav)
+                        sync_to_rm_webdav(item, zot, rm, webdav, folders)
                     else:
-                        sync_to_rm(item, zot, rm)
+                        sync_to_rm(item, zot, rm, folders)
                 zot.delete_tags("to_sync")        
                 
                 # ...and download, add highlighting and sync to Zotero.
@@ -70,7 +70,7 @@ def main(argv):
                 red_list = get_sync_status(zot)
                 for entity in tqdm(rm.get_meta_items()):
                     if entity.VissibleName + ".pdf" not in red_list:
-                        result = get_from_rm(entity, rm, "Gelesen")
+                        result = get_from_rm(entity, rm, folders["read"])
                         if result:
                             content_id, pdf_name = result
                             add_highlights_simple(entity, content_id, pdf_name)
