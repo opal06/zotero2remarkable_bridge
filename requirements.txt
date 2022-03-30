@@ -1,0 +1,6 @@
+tqdm==4.62.1
+pymupdf==1.19.6
+PyYAML==6.0
+pyzotero==1.5.2
+rmapy==0.3.1
+rmrl==0.2.1
