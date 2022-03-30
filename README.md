@@ -1,4 +1,4 @@
-# zotero_remarkable_sync
+# Zotero2Remarkable Bridge
 
 
 **Disclaimer! The sync from ReMarkable to Zotero is WIP and does not always work
@@ -46,7 +46,7 @@ ReMarkable.
 The program accepts the following arguments:
 
 ```
-./zotero_remarkable_bridge.py [-m push|pull|both]
+./zotero2remarkable_bridge.py [-m push|pull|both]
 
 -m: Mode
 push: Only push to ReMarkable
