@@ -1,6 +1,9 @@
 import fitz
 import json
+import tempfile
 from pathlib import Path
+from fuzzysearch import find_near_matches
+from thefuzz import fuzz
 
 def save_pdf(pdf):
     if pdf.can_save_incrementally():
@@ -30,6 +33,23 @@ def get_scale(page_rect):
     scale = round(page_rect.y1) / pdf_height
     return scale
 
+def proportional_max_l_dist(needle):
+    max_l_dist = int(len(needle) * 0.1)
+    if max_l_dist > 100:
+        max_l_dist = 100
+    elif max_l_dist < 1:
+        max_l_dist = 1
+    return max_l_dist
+
+
+def fsearch(needle, textpage):
+    max_l_dist = proportional_max_l_dist(needle)
+    matches = find_near_matches(needle, textpage, max_l_dist=max_l_dist)
+    match_ratio = [fuzz.ratio(needle, m.matched) for m in matches]
+    best_match = match_ratio.index(max(match_ratio))
+    search_text = matches[best_match].matched
+    return search_text
+
 
 def add_highlights_simple(entity, content_id, pdf_name):
     temp_path = Path(tempfile.gettempdir())
@@ -55,19 +75,28 @@ def add_highlights_simple(entity, content_id, pdf_name):
             page_nr = content_json["pages"].index(highlights_id)
                                                  
             page = pdf.load_page(page_nr)
+            textpage = page.get_textpage()
                 
             for hl in hl_list:
                 if "\u0002" in hl["text"]:
                     search_text = hl["text"].replace("\u0002", "")
                 else:
                     search_text = hl["text"]
-                quads = page.search_for(search_text, quads=True)                  
+                quads = page.search_for(search_text, quads=True, textpage=textpage)
                     
                 if quads != []:                    
                     highlight = page.add_highlight_annot(quads)
                 else:
-                    print("Failed to create highlight on " + str(page_nr + 1) + "...")
-                
+                    print("Simple search failed, trying fuzzy search...")
+                    print(search_text)
+                    fsearch_text = fsearch(search_text, textpage.extractText())
+                    quads = page.search_for(fsearch_text, quads=True, textpage=textpage)
+                    if quads != []:
+                        highlight = page.add_highlight_annot(quads)
+                    else:
+                        print("Failed creating highlight on page " + str(page_nr + 1) + ". Text not found.")
+
+
                 if "color" in hl:
                     highlight_color = colors[hl["color"]]
                     highlight.set_colors(stroke=highlight_color)
