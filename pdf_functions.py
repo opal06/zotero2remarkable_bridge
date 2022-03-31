@@ -5,7 +5,7 @@ from pathlib import Path
 from fuzzysearch import find_near_matches
 from thefuzz import fuzz
 
-def save_pdf(pdf):
+def save_pdf(pdf, temp_path, pdf_name):
     if pdf.can_save_incrementally():
         pdf.save(temp_path / pdf_name, incremental=True, encryption=0)
         pdf.close()
@@ -104,7 +104,7 @@ def add_highlights_simple(entity, content_id, pdf_name):
             
         print("Added annotations to file")
         
-        pdf_name = save_pdf(pdf)
+        pdf_name = save_pdf(pdf, temp_path, pdf_name)
         
         print("Saved PDF as " + str(pdf_name))
         #rmtree(work_dir)
