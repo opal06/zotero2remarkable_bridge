@@ -88,7 +88,6 @@ def add_highlights_simple(entity, content_id, pdf_name):
                     highlight = page.add_highlight_annot(quads)
                 else:
                     print("Simple search failed, trying fuzzy search...")
-                    print(search_text)
                     fsearch_text = fsearch(search_text, textpage.extractText())
                     quads = page.search_for(fsearch_text, quads=True, textpage=textpage)
                     if quads != []:

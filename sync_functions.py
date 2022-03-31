@@ -189,7 +189,6 @@ def zotero_upload(pdf_name, zot):
                                   
 
 def zotero_upload_webdav(pdf_name, zot, webdav):
-    print(pdf_name)
     temp_path = Path(tempfile.gettempdir())
     for item in zot.items(tag="synced"):
         item_id = item["key"]
@@ -231,7 +230,6 @@ def zotero_upload_webdav(pdf_name, zot, webdav):
                     bytes = f.read()
                     md5 = hashlib.md5(bytes).hexdigest()
                 propfile_content = '<properties version="1"><mtime>' + mtime + '</mtime><hash>' + md5 + '</hash></properties>'
-                print(propfile_content)
                 propfile = temp_path / (key + ".prop")
                 with open(propfile, "w") as pf:
                     pf.write(propfile_content)
