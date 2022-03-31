@@ -32,7 +32,7 @@ are generated, some highlights may be missing in the export. The program will ge
 ### Setup
 
 1. Add required packages through pip:
-`pip3 install requirements.txt`
+`pip3 install -r requirements.txt`
 
 2. Allow execution of the program:
 `sudo chmod +x zotero_remarkable_bridge.py`
