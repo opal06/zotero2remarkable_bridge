@@ -76,6 +76,7 @@ def add_highlights_simple(entity, content_id, pdf_name):
                                                  
             page = pdf.load_page(page_nr)
             textpage = page.get_textpage()
+            page_text = textpage.extractText()
                 
             for hl in hl_list:
                 if "\u0002" in hl["text"]:
@@ -83,12 +84,15 @@ def add_highlights_simple(entity, content_id, pdf_name):
                 else:
                     search_text = hl["text"]
                 quads = page.search_for(search_text, quads=True, textpage=textpage)
-                    
-                if quads != []:                    
+
+                """ #TODO: Fix the issue of multiple highlights being created for
+                multiple occurences of the same text (mainly when only one word is
+                highlighted). """
+                if quads != []:
                     highlight = page.add_highlight_annot(quads)
                 else:
                     print("Simple search failed, trying fuzzy search...")
-                    fsearch_text = fsearch(search_text, textpage.extractText())
+                    fsearch_text = fsearch(search_text, page_text)
                     quads = page.search_for(fsearch_text, quads=True, textpage=textpage)
                     if quads != []:
                         highlight = page.add_highlight_annot(quads)
