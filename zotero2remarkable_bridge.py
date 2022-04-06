@@ -43,7 +43,7 @@ def main(argv):
                 print("Pulling...")
                 read_list = get_sync_status(zot)
                 for entity in tqdm(rm.get_meta_items()):
-                    if entity.VissibleName + ".pdf" not in red_list:
+                    if entity.VissibleName + ".pdf" not in read_list:
                         result = get_from_rm(entity, rm, folders["read"])
                         if result:
                             content_id, pdf_name = result
