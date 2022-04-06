@@ -46,8 +46,11 @@ def fsearch(needle, textpage):
     max_l_dist = proportional_max_l_dist(needle)
     matches = find_near_matches(needle, textpage, max_l_dist=max_l_dist)
     match_ratio = [fuzz.ratio(needle, m.matched) for m in matches]
-    best_match = match_ratio.index(max(match_ratio))
-    search_text = matches[best_match].matched
+    if match_ratio != []:
+        best_match = match_ratio.index(max(match_ratio))
+        search_text = matches[best_match].matched
+    else:
+        search_text = False
     return search_text
 
 
@@ -93,7 +96,11 @@ def add_highlights_simple(entity, content_id, pdf_name):
                 else:
                     print("Simple search failed, trying fuzzy search...")
                     fsearch_text = fsearch(search_text, page_text)
-                    quads = page.search_for(fsearch_text, quads=True, textpage=textpage)
+                    if fsearch_text:
+                        quads = page.search_for(fsearch_text, quads=True, textpage=textpage)
+                    else:
+                        print("Failed creating highlight on page " + str(page_nr + 1) + ". Text not found.")
+                        continue
                     if quads != []:
                         highlight = page.add_highlight_annot(quads)
                     else:
