@@ -271,7 +271,7 @@ def zotero_upload_webdav(pdf_name, zot, webdav):
                     print("Propfile upload failed, skipping...")
                     continue
                             
-                zot.add_tags(item, "gelesen")
+                zot.add_tags(item, "read")
                 print(pdf_name.name + " uploaded to Zotero.")
                 (temp_path / pdf_name).unlink()
                 (temp_path / attachment_zip).unlink()
@@ -281,7 +281,7 @@ def zotero_upload_webdav(pdf_name, zot, webdav):
 
 def get_sync_status(zot):
     read_list = []
-    for item in zot.items(tag="gelesen"):
+    for item in zot.items(tag="read"):
         for attachment in zot.children(item["key"]):
             if "contentType" in attachment["data"] and attachment["data"]["contentType"] == "application/pdf":
                 read_list.append(attachment["data"]["filename"])
