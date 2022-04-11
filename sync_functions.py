@@ -138,18 +138,17 @@ def sync_to_rm_webdav(item, zot, rm, webdav, folders):
 
 def get_from_rm(entity, rm, folder):
     temp_path = Path(tempfile.gettempdir())
-    parent_id = str([p for p in rm.get_meta_items() if p.VissibleName == folder][0]).strip("<>").split(" ")[1]
+    parent_id = [p.ID for p in rm.get_meta_items() if p.VissibleName == folder][0]
     
     if entity.Parent == parent_id:
         print("Processing " + entity.VissibleName + "...")
-        content_id = str(rm.download(entity)).strip("<>").split(" ")[1]
+        content_id = entity.ID
         zip_name = entity.VissibleName + ".zip"
         file_path = temp_path / zip_name
         unzip_path = temp_path / "unzipped"
         rm.download(rm.get_doc(content_id)).dump(file_path)
         print("File downloaded")
             
-        
         with zipfile.ZipFile(file_path, "r") as zf:
             zf.extractall(unzip_path)
         (unzip_path / (content_id + ".pagedata")).unlink()
