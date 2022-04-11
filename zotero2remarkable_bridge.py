@@ -41,19 +41,16 @@ def main(argv):
             elif arg == "pull":
                 # Only get files from ReMarkable and upload to Zotero
                 print("Pulling...")
-                read_list = get_sync_status(zot)
-                for entity in tqdm(rm.get_meta_items()):
-                    if entity.VissibleName + ".pdf" not in read_list:
-                        result = get_from_rm(entity, rm, folders["read"])
-                        if result:
-                            content_id, pdf_name = result
-                            add_highlights_simple(entity, content_id, pdf_name)
-                            if webdav:
-                                zotero_upload_webdav(pdf_name, zot, webdav)
-                            else:
-                                zotero_upload(pdf_name, zot)
+                collection = rm.get_meta_items()
+                children = get_children(folders["read"], collection)
+                for entity in tqdm(children):
+                    result = download_from_rm(entity, rm)
+                    content_id, pdf_name = result
+                    add_highlights_simple(entity, content_id, pdf_name)
+                    if webdav:
+                        zotero_upload_webdav(pdf_name, zot, webdav)
                     else:
-                        continue
+                        zotero_upload(pdf_name, zot)
                 
             elif arg == "both":
                 # Do both
@@ -68,36 +65,20 @@ def main(argv):
                 
                 # ...and download, add highlighting and sync to Zotero.
 
-                read_list = get_sync_status(zot)
-                for entity in tqdm(rm.get_meta_items()):
-                    if entity.VissibleName + ".pdf" not in read_list:
-                        result = get_from_rm(entity, rm, folders["read"])
-                        if result:
-                            content_id, pdf_name = result
-                            add_highlights_simple(entity, content_id, pdf_name)
-                            if webdav:
-                                zotero_upload_webdav(pdf_name, zot, webdav)
-                            else:
-                                zotero_upload(pdf_name, zot)
-                    else:
-                        continue
-                    
-            elif arg == "hl-test":
-                for entity in tqdm(rm.get_meta_items()):
-                    result = get_from_rm(entity, rm, "Test")
-                    if result:
-                        content_id, pdf_name = result
-                        add_highlights_simple(entity, content_id, pdf_name)
+                collection = rm.get_meta_items()
+                children = get_children(folders["read"], collection)
+                for entity in tqdm(children):
+                    result = download_from_rm(entity, rm)
+                    content_id, pdf_name = result
+                    add_highlights_simple(entity, content_id, pdf_name)
+                    if webdav:
                         zotero_upload_webdav(pdf_name, zot, webdav)
                     else:
-                        continue
-                
+                        zotero_upload(pdf_name, zot)
                             
-                
             else:
                 print("Invalid argument")
                 sys.exit()
         
-
 
 main(sys.argv[1:])

@@ -8,6 +8,7 @@ from shutil import rmtree
 from pyzotero import zotero
 from webdav3.client import Client as wdClient
 from rmapy.document import ZipDocument
+from rmapy.folder import Folder
 from rmrl import render
 from time import sleep
 from datetime import datetime
@@ -136,37 +137,72 @@ def sync_to_rm_webdav(item, zot, rm, webdav, folders):
             print("Found attachment, but it's not a PDF, skipping...")
 
 
-def get_from_rm(entity, rm, folder):
+def get_children(folder, collection):
+    folders = [f for f in collection if isinstance(f, Folder)]
+    read_folder = [f for f in folders if f.VissibleName == folder][0]
+    children = collection.children(read_folder)
+    return children
+
+
+def download_from_rm(entity, rm):
     temp_path = Path(tempfile.gettempdir())
-    parent_id = [p.ID for p in rm.get_meta_items() if p.VissibleName == folder][0]
+    print("Processing " + entity.VissibleName + "...")
+    content_id = entity.ID
+    zip_name = entity.VissibleName + ".zip"
+    file_path = temp_path / zip_name
+    unzip_path = temp_path / "unzipped"
+    rm.download(rm.get_doc(content_id)).dump(file_path)
+    print("File downloaded")
+
+    with zipfile.ZipFile(file_path, "r") as zf:
+        zf.extractall(unzip_path)
+    (unzip_path / (content_id + ".pagedata")).unlink()
+    with zipfile.ZipFile(file_path, "w") as zf:
+        for entry in sorted(unzip_path.glob("**/*")):
+            zf.write(unzip_path / entry, arcname=entry)
+
+    output = render(str(file_path))
+    print("PDF rendered")
+    pdf_name = entity.VissibleName + ".pdf"
+    with open(temp_path / pdf_name, "wb") as outputFile:
+        outputFile.write(output.read())
+    print("PDF written")
+    file_path.unlink()
+
+    return (content_id, pdf_name)
+
+
+# def get_from_rm(entity, rm, folder):
+#     temp_path = Path(tempfile.gettempdir())
+#     parent_id = [p.ID for p in rm.get_meta_items() if p.VissibleName == folder][0]
     
-    if entity.Parent == parent_id:
-        print("Processing " + entity.VissibleName + "...")
-        content_id = entity.ID
-        zip_name = entity.VissibleName + ".zip"
-        file_path = temp_path / zip_name
-        unzip_path = temp_path / "unzipped"
-        rm.download(rm.get_doc(content_id)).dump(file_path)
-        print("File downloaded")
+#     if entity.Parent == parent_id:
+#         print("Processing " + entity.VissibleName + "...")
+#         content_id = entity.ID
+#         zip_name = entity.VissibleName + ".zip"
+#         file_path = temp_path / zip_name
+#         unzip_path = temp_path / "unzipped"
+#         rm.download(rm.get_doc(content_id)).dump(file_path)
+#         print("File downloaded")
             
-        with zipfile.ZipFile(file_path, "r") as zf:
-            zf.extractall(unzip_path)
-        (unzip_path / (content_id + ".pagedata")).unlink()
-        with zipfile.ZipFile(file_path, "w") as zf:
-            for entry in sorted(unzip_path.glob("**/*")):
-                zf.write(unzip_path / entry, arcname=entry)
+#         with zipfile.ZipFile(file_path, "r") as zf:
+#             zf.extractall(unzip_path)
+#         (unzip_path / (content_id + ".pagedata")).unlink()
+#         with zipfile.ZipFile(file_path, "w") as zf:
+#             for entry in sorted(unzip_path.glob("**/*")):
+#                 zf.write(unzip_path / entry, arcname=entry)
                 
-        output = render(str(file_path))
-        print("PDF rendered")
-        pdf_name = entity.VissibleName + ".pdf"
-        with open(temp_path / pdf_name, "wb") as outputFile:
-            outputFile.write(output.read())
-        print("PDF written")
-        file_path.unlink()
+#         output = render(str(file_path))
+#         print("PDF rendered")
+#         pdf_name = entity.VissibleName + ".pdf"
+#         with open(temp_path / pdf_name, "wb") as outputFile:
+#             outputFile.write(output.read())
+#         print("PDF written")
+#         file_path.unlink()
         
-        return (content_id, pdf_name)
-    else:
-        return False
+#         return (content_id, pdf_name)
+#     else:
+#         return False
     
 
 def zotero_upload(pdf_name, zot):
