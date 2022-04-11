@@ -261,7 +261,7 @@ def webdav_uploader(webdav, remote_path, local_path):
 def zotero_upload_webdav(pdf_name, zot, webdav):
     temp_path = Path(tempfile.gettempdir())
     item_template = zot.item_template("attachment", "imported_file")
-    for item in zot.items(tag="synced"):
+    for item in zot.items(tag=["synced", "-read"]):
         item_id = item["key"]
         for attachment in zot.children(item_id):
             if "filename" in attachment["data"] and attachment["data"]["filename"] == pdf_name:
