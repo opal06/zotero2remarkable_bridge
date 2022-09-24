@@ -13,17 +13,6 @@ from time import sleep
 from datetime import datetime
 
 
-def check_auth(rm):
-    if not rm.is_auth():
-        token = input("Device not registered yet. Please enter token from https://my.remarkable.com/device/desktop/connect : ")
-        rm.register_device(token)
-        rm.renew_token()
-        print("Registered new device!")
-    else:
-        rm.renew_token()
-        print("Device already registered!")
-
-
 def load_config(config_file):
     with open(config_file, "r") as stream:
         try:
