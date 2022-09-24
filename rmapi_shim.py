@@ -19,6 +19,8 @@ def get_files(folder):
                 files_list.remove(file)
             elif file[:3] == "[d]":
                 files_list.remove(file)
+            elif file == "":
+                files_list.remove(file)
             else:
                 files_list[files_list.index(file)] = file[4:]
         return files_list
