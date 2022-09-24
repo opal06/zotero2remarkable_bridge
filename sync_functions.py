@@ -3,12 +3,11 @@ import zipfile
 import yaml
 import tempfile
 import hashlib
+import rmapi_shim as rmapi
 from pathlib import Path
 from shutil import rmtree
 from pyzotero import zotero
 from webdav3.client import Client as wdClient
-from rmapy.document import ZipDocument
-from rmapy.folder import Folder
 from rmrl import render
 from time import sleep
 from datetime import datetime
@@ -65,7 +64,7 @@ def write_config(file_name):
     print("Config written to " + file_name + "\n If something went wrong, please edit config manually.")
 
 
-def sync_to_rm(item, zot, rm, folders):
+def sync_to_rm(item, zot, folders):
     temp_path = Path(tempfile.gettempdir())
     item_id = item["key"]
     attachments = zot.children(item_id)
@@ -78,25 +77,18 @@ def sync_to_rm(item, zot, rm, folders):
             # Get actual file and repack it in reMarkable's file format
             file_name = zot.dump(attachment_id, path=temp_path)
             if file_name:
-                raw_document = ZipDocument(doc=file_name)
+                upload = rmapi.upload_file(file_name, "/Zotero/" + folders["unread"])
+            if upload:
+                zot.add_tags(item, "synced")
+                os.remove(file_name)
+                print("Uploaded " + attachment_name + " to reMarkable.")
             else:
-                print("Error downloading file! Abborting...")
-                break
-                
-            # Get the folder ID for upload dir
-            parent_id = str([p for p in rm.get_meta_items() if p.VissibleName == "Zotero"][0]).strip("<>").split(" ")[1]
-            folder_id = [f for f in rm.get_meta_items() if f.VissibleName == folders["unread"] and f.Parent == parent_id][0]
-    
-            # Upload to reMarkable and set tag in Zotero
-            rm.upload(raw_document, folder_id)
-            zot.add_tags(item, "synced")
-            os.remove(file_name)
-            print("Uploaded " + attachment_name + " to reMarkable.")
+                print("Failed to upload " + attachment_name + " to reMarkable.")
         else:
             print("Found attachment, but it's not a PDF, skipping...")
         
        
-def sync_to_rm_webdav(item, zot, rm, webdav, folders):
+def sync_to_rm_webdav(item, zot, webdav, folders):
     temp_path = Path(tempfile.gettempdir())
     item_id = item["key"]
     attachments = zot.children(item_id)
@@ -114,7 +106,7 @@ def sync_to_rm_webdav(item, zot, rm, webdav, folders):
             with zipfile.ZipFile(file_path) as zf:
                 zf.extractall(unzip_path)
             if (unzip_path / attachment_name ).is_file():
-                raw_document = ZipDocument(doc=str(unzip_path / attachment_name))
+                uploader = rmapi.upload_file(str(unzip_path / attachment_name), "/Zotero/" + folders["unread"])
             else:
                 """ #TODO: Sometimes Zotero does not seem to rename attachments properly,
                     leading to reported file names diverging from the actual one. 
@@ -122,37 +114,29 @@ def sync_to_rm_webdav(item, zot, rm, webdav, folders):
                     file errors, skip that file. Probably it could be worked around better though.""" 
                 print("PDF not found in downloaded file. Filename might be different. Try renaming file in Zotero, sync and try again.")
                 break
-    
-            # Get the folder ID for upload dir
-            parent_id = str([f for f in rm.get_meta_items() if f.VissibleName == "Zotero"][0]).strip("<>").split(" ")[1]
-            folder_id = [e for e in rm.get_meta_items() if e.VissibleName == folders["unread"] and e.Parent == parent_id][0]
-    
-            # Upload to reMarkable and set tag in Zotero
-            rm.upload(raw_document, folder_id)
-            zot.add_tags(item, "synced")
-            file_path.unlink()
-            rmtree(unzip_path)
-            print("Uploaded " + attachment_name + " to reMarkable.")
+            if uploader:
+                zot.add_tags(item, "synced")
+                file_path.unlink()
+                rmtree(unzip_path)
+                print("Uploaded " + attachment_name + " to reMarkable.")
+            else:
+                print("Failed to upload " + attachment_name + " to reMarkable.")
         else:
             print("Found attachment, but it's not a PDF, skipping...")
 
 
-def get_children(folder, collection):
-    folders = [f for f in collection if isinstance(f, Folder)]
-    read_folder = [f for f in folders if f.VissibleName == folder][0]
-    children = collection.children(read_folder)
-    return children
-
-
-def download_from_rm(entity, rm):
+def download_from_rm(entity, folder):
     temp_path = Path(tempfile.gettempdir())
-    print("Processing " + entity.VissibleName + "...")
-    content_id = entity.ID
-    zip_name = entity.VissibleName + ".zip"
+    print("Processing " + entity + "...")
+    zip_name = entity + ".zip"
     file_path = temp_path / zip_name
     unzip_path = temp_path / "unzipped"
-    rm.download(rm.get_doc(content_id)).dump(file_path)
-    print("File downloaded")
+    download = rmapi.download_file(folder + entity, str(temp_path))
+    if download:
+        print("File downloaded")
+    else:
+        print("Failed to download file")
+        break
 
     with zipfile.ZipFile(file_path, "r") as zf:
         zf.extractall(unzip_path)
@@ -163,47 +147,14 @@ def download_from_rm(entity, rm):
 
     output = render(str(file_path))
     print("PDF rendered")
-    pdf_name = entity.VissibleName + ".pdf"
+    pdf_name = entity + ".pdf"
     with open(temp_path / pdf_name, "wb") as outputFile:
         outputFile.write(output.read())
     print("PDF written")
     file_path.unlink()
 
-    return (content_id, pdf_name)
+    return pdf_name
 
-
-# def get_from_rm(entity, rm, folder):
-#     temp_path = Path(tempfile.gettempdir())
-#     parent_id = [p.ID for p in rm.get_meta_items() if p.VissibleName == folder][0]
-    
-#     if entity.Parent == parent_id:
-#         print("Processing " + entity.VissibleName + "...")
-#         content_id = entity.ID
-#         zip_name = entity.VissibleName + ".zip"
-#         file_path = temp_path / zip_name
-#         unzip_path = temp_path / "unzipped"
-#         rm.download(rm.get_doc(content_id)).dump(file_path)
-#         print("File downloaded")
-            
-#         with zipfile.ZipFile(file_path, "r") as zf:
-#             zf.extractall(unzip_path)
-#         (unzip_path / (content_id + ".pagedata")).unlink()
-#         with zipfile.ZipFile(file_path, "w") as zf:
-#             for entry in sorted(unzip_path.glob("**/*")):
-#                 zf.write(unzip_path / entry, arcname=entry)
-                
-#         output = render(str(file_path))
-#         print("PDF rendered")
-#         pdf_name = entity.VissibleName + ".pdf"
-#         with open(temp_path / pdf_name, "wb") as outputFile:
-#             outputFile.write(output.read())
-#         print("PDF written")
-#         file_path.unlink()
-        
-#         return (content_id, pdf_name)
-#     else:
-#         return False
-    
 
 def zotero_upload(pdf_name, zot):
     for item in zot.items(tag="synced"):
@@ -322,4 +273,3 @@ def get_sync_status(zot):
                 read_list.append(attachment["data"]["filename"])
     
     return read_list
-                  
