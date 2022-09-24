@@ -48,3 +48,10 @@ def get_metadata(file_path):
         return False
 
 
+def upload_file(file_path, target_folder):
+    # Upload a file to its destination folder
+    uploader = subprocess.run(["rmapi", "put", file_path, target_folder])
+    if uploader.returncode == 0:
+        return True
+    else:
+        return False
