@@ -11,7 +11,7 @@ def check_rmapi():
 
 def get_files(folder):
     # Get all files from a specific folder. Output is sanetised and subfolders are excluded
-    files = subprocess.run(["rmapi", "find", folder], capture_output=True, text=True)
+    files = subprocess.run(["rmapi", "ls", folder], capture_output=True, text=True)
     if files.returncode == 0:
         files_list = files.stdout.split("\n")
         for file in files_list:
