@@ -1,4 +1,5 @@
 import subprocess
+import json
 
 def check_rmapi():
     check = subprocess.run(["rmapi", "ls"])
@@ -32,3 +33,18 @@ def download_file(file_path, working_dir):
         return True
     else:
         return False
+
+
+def get_metadata(file_path):
+    # Get the file's metadata from reMarkable cloud and return it in metadata format
+    metadata = subprocess.run(["rmapi", "stat", file_path], capture_output=True, text=True)
+    if metadata.returncode == 0:
+        metadata_txt = metadata.stdout
+        json_start = metadata_txt.find("{")
+        json_end = metadata_txt.find("}") + 1
+        metadata = json.loads(metadata_txt[json_start:json_end])
+        return metadata
+    else:
+        return False
+
+
