@@ -60,8 +60,15 @@ def add_highlights_simple(entity, content_id, pdf_name):
     work_dir = temp_path / "unzipped"
     highlights_dir = work_dir / (content_id + ".highlights")
     
-    # Highlighter colors are saved as integers by ReMarkable: 0 = yellow, 4 = green, 5 = pink
-    colors = {0 : [1.0, 1.0, 0.0], 4 : [0.0, 1.0, 0.3], 5 : [1.0, 0.0, 0.7]}
+    # Highlighter colors are saved as integers by ReMarkable: 0 and 3 = yellow,
+    # 4 = green, 5 = pink, 8 = grey
+    colors = {
+        0 : [1.0, 1.0, 0.0],
+        3 : [1.0, 1.0, 0.0],
+        4 : [0.0, 1.0, 0.3],
+        5 : [1.0, 0.0, 0.7],
+        8 : [0.6, 0.6, 0.6]
+    }
     
     if highlights_dir.is_dir():
          
@@ -109,7 +116,10 @@ def add_highlights_simple(entity, content_id, pdf_name):
 
 
                 if "color" in hl:
-                    highlight_color = colors[hl["color"]]
+                    try:
+                        highlight_color = colors[hl["color"]]
+                    except KeyError:
+                        highlight_color = colors[0]  # default to yellow if color is not yet defined
                     highlight.set_colors(stroke=highlight_color)
                     highlight.update()
             
