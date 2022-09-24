@@ -16,7 +16,7 @@ def main(argv):
     else:
         write_config("config.yml")
         zot, webdav, folders = load_config("config.yml")
-    read_folder = "/Zotero/" + folders["read"]
+    read_folder = "/Zotero/" + folders["read"] + "/"
     
     try:
         opts, args = getopt.getopt(argv, "m:")
@@ -41,14 +41,17 @@ def main(argv):
                 # Only get files from ReMarkable and upload to Zotero
                 print("Pulling...")
                 files_list = rmapi.get_files(read_folder)
-                for entity in tqdm(files_list):
-                    pdf_name = download_from_rm(entity, read_folder)
-                    content_id = rmapi.get_metadata(read_folder + entity)["ID"]
-                    add_highlights_simple(entity, content_id, pdf_name)
-                    if webdav:
-                        zotero_upload_webdav(pdf_name, zot, webdav)
-                    else:
-                        zotero_upload(pdf_name, zot)
+                if files_list:
+                    for entity in tqdm(files_list):
+                        content_id = rmapi.get_metadata(read_folder + entity)["ID"]
+                        pdf_name = download_from_rm(entity, read_folder, content_id)
+                        add_highlights_simple(entity, content_id, pdf_name)
+                        if webdav:
+                            zotero_upload_webdav(pdf_name, zot, webdav)
+                        else:
+                            zotero_upload(pdf_name, zot)
+                else:
+                    print("No files to pull found")
                 
             elif arg == "both":
                 # Do both

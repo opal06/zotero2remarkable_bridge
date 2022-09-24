@@ -14,16 +14,11 @@ def get_files(folder):
     files = subprocess.run(["rmapi", "ls", folder], capture_output=True, text=True)
     if files.returncode == 0:
         files_list = files.stdout.split("\n")
+        files_list_new = []
         for file in files_list:
-            if file[:5] == " Time":
-                files_list.remove(file)
-            elif file[:3] == "[d]":
-                files_list.remove(file)
-            elif file == "":
-                files_list.remove(file)
-            else:
-                files_list[files_list.index(file)] = file[4:]
-        return files_list
+            if file[:5] != " Time" and file[:3] != "[d]" and file != "":
+                files_list_new.append(file[4:])
+        return files_list_new
     else:
         return False
 

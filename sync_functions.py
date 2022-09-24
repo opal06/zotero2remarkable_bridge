@@ -125,7 +125,7 @@ def sync_to_rm_webdav(item, zot, webdav, folders):
             print("Found attachment, but it's not a PDF, skipping...")
 
 
-def download_from_rm(entity, folder):
+def download_from_rm(entity, folder, content_id):
     temp_path = Path(tempfile.gettempdir())
     print("Processing " + entity + "...")
     zip_name = entity + ".zip"
@@ -136,7 +136,7 @@ def download_from_rm(entity, folder):
         print("File downloaded")
     else:
         print("Failed to download file")
-        break
+
 
     with zipfile.ZipFile(file_path, "r") as zf:
         zf.extractall(unzip_path)
