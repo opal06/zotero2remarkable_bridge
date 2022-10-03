@@ -10,7 +10,7 @@ from pdf_functions import add_highlights_simple
 
 def push(zot, webdav, folders):
     sync_items = zot.items(tag="to_sync")
-    print("Found " + str(len(sync_items)) + " elements to sync...")
+    print(f"Found {len(sync_items)} elements to sync...")
     for item in tqdm(sync_items):
         if webdav:
             sync_to_rm_webdav(item, zot, webdav, folders)
@@ -23,7 +23,7 @@ def pull(zot, webdav, read_folder):
     files_list = rmapi.get_files(read_folder)
     if files_list:
         for entity in tqdm(files_list):
-            content_id = rmapi.get_metadata(read_folder + entity)["ID"]
+            content_id = rmapi.get_metadata(f"{read_folder}{entity}")["ID"]
             pdf_name = download_from_rm(entity, read_folder, content_id)
             add_highlights_simple(entity, content_id, pdf_name)
             if webdav:
@@ -41,7 +41,7 @@ def main(argv):
     else:
         write_config("config.yml")
         zot, webdav, folders = load_config("config.yml")
-    read_folder = "/Zotero/" + folders["read"] + "/"
+    read_folder = f"/Zotero/{folders['read']}/"
     
     try:
         opts, args = getopt.getopt(argv, "m:")

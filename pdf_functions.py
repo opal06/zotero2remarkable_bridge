@@ -21,7 +21,7 @@ def save_pdf(pdf, temp_path, pdf_name):
 
 
 def get_scale(page_rect):
-    """ This part was inspired by rmrl's implementation"""
+    # This part was inspired by rmrl's implementation
     display = {
         "screenwidth": 1404,
         "screenheight": 1872,
@@ -58,7 +58,7 @@ def fsearch(needle, textpage):
 def add_highlights_simple(entity, content_id, pdf_name):
     temp_path = Path(tempfile.gettempdir())
     work_dir = temp_path / "unzipped"
-    highlights_dir = work_dir / (content_id + ".highlights")
+    highlights_dir = work_dir / f"{content_id}.highlights"
     
     # Highlighter colors are saved as integers by ReMarkable: 0 and 3 = yellow,
     # 4 = green, 5 = pink, 8 = grey
@@ -81,7 +81,7 @@ def add_highlights_simple(entity, content_id, pdf_name):
                 hl_json = json.load(hl)
             hl_list = hl_json["highlights"][0]
                             
-            with open(work_dir / (content_id + ".content"), "r") as content_file:
+            with open(work_dir / f"{content_id}.content", "r") as content_file:
                 content_json = json.load(content_file)
             page_nr = content_json["pages"].index(highlights_id)
                                                  
@@ -107,12 +107,12 @@ def add_highlights_simple(entity, content_id, pdf_name):
                     if fsearch_text:
                         quads = page.search_for(fsearch_text, quads=True, textpage=textpage)
                     else:
-                        print("Failed creating highlight on page " + str(page_nr + 1) + ". Text not found.")
+                        print(f"Failed creating highlight on page {page_nr + 1}. Text not found.")
                         continue
                     if quads != []:
                         highlight = page.add_highlight_annot(quads)
                     else:
-                        print("Failed creating highlight on page " + str(page_nr + 1) + ". Text not found.")
+                        print(f"Failed creating highlight on page {page_nr + 1}. Text not found.")
 
 
                 if "color" in hl:
@@ -128,7 +128,7 @@ def add_highlights_simple(entity, content_id, pdf_name):
         pdf_name = save_pdf(pdf, temp_path, pdf_name)
         shutil.rmtree(str(work_dir))
         
-        print("Saved PDF as " + str(pdf_name))
+        print(f"Saved PDF as {pdf_name}")
         
     else:
         print("No highlights found, skipping...")                     
