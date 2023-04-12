@@ -2,22 +2,45 @@
 
 import sys
 import getopt
+import rmapi_shim as rmapi
 from tqdm import tqdm
-from rmapy.api import Client
+from config_functions import *
 from sync_functions import *
-from pdf_functions import add_highlights_simple
 
+
+def push(zot, webdav, folders):
+    sync_items = zot.items(tag="to_sync")
+    print(f"Found {len(sync_items)} elements to sync...")
+    for item in tqdm(sync_items):
+        if webdav:
+            sync_to_rm_webdav(item, zot, webdav, folders)
+        else:
+            sync_to_rm(item, zot, folders)
+    zot.delete_tags("to_sync")
+
+
+def pull(zot, webdav, read_folder):
+    files_list = rmapi.get_files(read_folder)
+    if files_list:
+        for entity in tqdm(files_list):
+            content_id = rmapi.get_metadata(f"{read_folder}{entity}")["ID"]
+            pdf_name = download_from_rm(entity, read_folder, content_id)
+            if webdav:
+                zotero_upload_webdav(pdf_name, zot, webdav)
+            else:
+                zotero_upload(pdf_name, zot)
+    else:
+        print("No files to pull found")
 
 
 def main(argv):
     config_path = Path.cwd() / "config.yml"
-    rm = Client()
-    check_auth(rm)
     if config_path.exists():
         zot, webdav, folders = load_config("config.yml")
     else:
         write_config("config.yml")
         zot, webdav, folders = load_config("config.yml")
+    read_folder = f"/Zotero/{folders['read']}/"
     
     try:
         opts, args = getopt.getopt(argv, "m:")
@@ -30,52 +53,23 @@ def main(argv):
             if arg == "push":
                 # Only sync files from Zotero to reMarkable
                 print("Pushing...")
-                print("Found " + str(len(zot.items(tag="to_sync"))) + " elements to sync...") 
-                for item in tqdm(zot.items(tag="to_sync")):
-                    if webdav: 
-                        sync_to_rm_webdav(item, zot, rm, webdav, folders)
-                    else:
-                        sync_to_rm(item, zot, rm, folders)
-                zot.delete_tags("to_sync")
+                push(zot, webdav, folders)
 
             elif arg == "pull":
                 # Only get files from ReMarkable and upload to Zotero
                 print("Pulling...")
-                collection = rm.get_meta_items()
-                children = get_children(folders["read"], collection)
-                for entity in tqdm(children):
-                    result = download_from_rm(entity, rm)
-                    content_id, pdf_name = result
-                    add_highlights_simple(entity, content_id, pdf_name)
-                    if webdav:
-                        zotero_upload_webdav(pdf_name, zot, webdav)
-                    else:
-                        zotero_upload(pdf_name, zot)
+                pull(zot, webdav, read_folder)
                 
             elif arg == "both":
                 # Do both
                 print("Do both...")
                 # Upload...
-                for item in tqdm(zot.items(tag="to_sync")):
-                    if webdav:
-                        sync_to_rm_webdav(item, zot, rm, webdav, folders)
-                    else:
-                        sync_to_rm(item, zot, rm, folders)
-                zot.delete_tags("to_sync")        
+                push(zot, webdav, folders)
                 
                 # ...and download, add highlighting and sync to Zotero.
 
-                collection = rm.get_meta_items()
-                children = get_children(folders["read"], collection)
-                for entity in tqdm(children):
-                    result = download_from_rm(entity, rm)
-                    content_id, pdf_name = result
-                    add_highlights_simple(entity, content_id, pdf_name)
-                    if webdav:
-                        zotero_upload_webdav(pdf_name, zot, webdav)
-                    else:
-                        zotero_upload(pdf_name, zot)
-                            
+                pull(zot, webdav, read_folder)
+
             else:
                 print("Invalid argument")
                 sys.exit()
