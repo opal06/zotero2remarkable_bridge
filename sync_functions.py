@@ -51,7 +51,7 @@ def sync_to_rm_webdav(item, zot, webdav, folders):
             # Get actual file from webdav, extract it and repack it in reMarkable's file format
             file_name = f"{attachment_id}.zip"
             file_path = Path(temp_path / file_name)
-            unzip_path = Path(temp_path / "unzipped")     
+            unzip_path = Path(temp_path / f"{file_name}-unzipped")
             webdav.download_sync(remote_path=file_name, local_path=file_path)
             with zipfile.ZipFile(file_path) as zf:
                 zf.extractall(unzip_path)
@@ -91,12 +91,16 @@ def download_from_rm(entity, folder, content_id):
         zf.extractall(unzip_path)
 
     renderer = remarks
-    args = {"combined_md": True}
-    renderer.run_remarks(unzip_path, temp_path, args)
+    args = {"combined_pdf": True, "combined_md": False, "ann_type": ["scribbles", "highlights"]}
+    renderer.run_remarks(unzip_path, temp_path, **args)
     print("PDF rendered")
-    pdf_name = f"{entity}.pdf"
+    pdf = (temp_path / f"{entity} _remarks.pdf")
+    pdf = pdf.rename(pdf.with_stem(f"{entity}"))
+    pdf_name = pdf.name
+
     print("PDF written")
     file_path.unlink()
+    rmtree(unzip_path)
 
     return pdf_name
 
