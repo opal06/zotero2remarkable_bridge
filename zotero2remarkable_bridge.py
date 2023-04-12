@@ -6,7 +6,6 @@ import rmapi_shim as rmapi
 from tqdm import tqdm
 from config_functions import *
 from sync_functions import *
-from pdf_functions import add_highlights_simple
 
 
 def push(zot, webdav, folders):
@@ -26,7 +25,6 @@ def pull(zot, webdav, read_folder):
         for entity in tqdm(files_list):
             content_id = rmapi.get_metadata(f"{read_folder}{entity}")["ID"]
             pdf_name = download_from_rm(entity, read_folder, content_id)
-            add_highlights_simple(entity, content_id, pdf_name)
             if webdav:
                 zotero_upload_webdav(pdf_name, zot, webdav)
             else:

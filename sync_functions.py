@@ -4,11 +4,11 @@ import yaml
 import tempfile
 import hashlib
 import rmapi_shim as rmapi
+import remarks
 from pathlib import Path
 from shutil import rmtree
 from pyzotero import zotero
 from webdav3.client import Client as wdClient
-from rmrl import render
 from time import sleep
 from datetime import datetime
 
@@ -80,7 +80,7 @@ def download_from_rm(entity, folder, content_id):
     print(f"Processing {entity}...")
     zip_name = f"{entity}.zip"
     file_path = temp_path / zip_name
-    unzip_path = temp_path / "unzipped"
+    unzip_path = temp_path / f"{entity}-unzipped"
     download = rmapi.download_file(f"{folder}{entity}", str(temp_path))
     if download:
         print("File downloaded")
@@ -89,16 +89,12 @@ def download_from_rm(entity, folder, content_id):
 
     with zipfile.ZipFile(file_path, "r") as zf:
         zf.extractall(unzip_path)
-    (unzip_path / f"{content_id}.pagedata").unlink()
-    with zipfile.ZipFile(file_path, "w") as zf:
-        for entry in sorted(unzip_path.glob("**/*")):
-            zf.write(unzip_path / entry, arcname=entry)
 
-    output = render(str(file_path))
+    renderer = remarks
+    args = {"combined_md": True}
+    renderer.run_remarks(unzip_path, temp_path, args)
     print("PDF rendered")
     pdf_name = f"{entity}.pdf"
-    with open(temp_path / pdf_name, "wb") as outputFile:
-        outputFile.write(output.read())
     print("PDF written")
     file_path.unlink()
 

@@ -5,5 +5,5 @@ python-levenshtein==0.12.1
 PyYAML==6.0
 pyzotero==1.5.2
 rmapy==0.3.1
-rmrl==0.2.1
 thefuzz==0.19.0
+remarks @ git+https://github.com/lucasrla/remarks
