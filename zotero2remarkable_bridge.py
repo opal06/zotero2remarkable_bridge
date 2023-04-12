@@ -4,6 +4,7 @@ import sys
 import getopt
 import rmapi_shim as rmapi
 from tqdm import tqdm
+from config_functions import *
 from sync_functions import *
 from pdf_functions import add_highlights_simple
 
