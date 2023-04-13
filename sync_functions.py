@@ -2,12 +2,12 @@ import os
 import zipfile
 import yaml
 import tempfile
-import rmapi_shim as rmapi
 import remarks
 from pathlib import Path
 from shutil import rmtree
 from pyzotero import zotero
 from webdav3.client import Client as wdClient
+from rmapi_shim import Rmapi
 from config_functions import load_config
 from utils import *
 
@@ -17,6 +17,7 @@ class SyncFile:
         self.temp_path = Path(tempfile.gettempdir() / "zot2rm")
         temp_path.mkdir(parents=True, exist_ok=True)
         self.zot, self.webdav, self.folders = load_config(conf_file)
+        self.rmapi = Rmapi(self.temp_path)
         self.read_folder_path = f"/Zotero/{folders['read']}/"
         self.unread_folder_path = f"/Zotero/{folders['unread']}/"
 
@@ -33,7 +34,7 @@ class SyncFile:
                 # Get actual file and repack it in reMarkable's file format
                 file_name = self.zot.dump(attachment_id, path=temp_path)
                 if file_name:
-                    upload = rmapi.upload_file(file_name, self.unread_folder_path)
+                    upload = self.rmapi.upload_file(file_name, self.unread_folder_path)
                 if upload:
                     self.zot.add_tags(item, "synced")
                     os.remove(file_name)
@@ -64,7 +65,7 @@ class SyncFile:
                 with zipfile.ZipFile(file_path) as zf:
                     zf.extractall(unzip_path)
                 if (unzip_path / attachment_name ).is_file():
-                    uploader = rmapi.upload_file(str(unzip_path / attachment_name), self.unread_folder_path)
+                    uploader = self.rmapi.upload_file(str(unzip_path / attachment_name), self.unread_folder_path)
                 else:
                     """ #TODO: Sometimes Zotero does not seem to rename attachments properly,
                         leading to reported file names diverging from the actual one.
@@ -91,7 +92,7 @@ class SyncFile:
         zip_name = f"{entity}.zip"
         file_path = self.temp_path / zip_name
         unzip_path = self.temp_path / f"{entity}-unzipped"
-        download = rmapi.download_file(f"{folder}{entity}", str(self.temp_path))
+        download = self.rmapi.download_file(f"{folder}{entity}")
         if download:
             print("File downloaded")
         else:
@@ -209,7 +210,7 @@ class SyncFile:
 
 
     def pull(self):
-        files_list = rmapi.get_files(self.read_folder_path)
+        files_list = self.rmapi.get_files(self.read_folder_path)
         if files_list:
             for entity in tqdm(files_list):
                 pdf_name = self.download_from_rm(entity, self.read_folder_path)
@@ -218,4 +219,4 @@ class SyncFile:
                 else:
                     self.zotero_upload(pdf_name)
         else:
-            print("No files to pull found")"
+            print("No files to pull found")
