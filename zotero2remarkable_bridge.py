@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 
-import sys
 import getopt
-import rmapi_shim as rmapi
-from tqdm import tqdm
+import sys
+from pathlib import Path
 from config_functions import write_config
 from sync_functions import SyncFile
 

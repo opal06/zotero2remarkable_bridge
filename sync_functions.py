@@ -1,26 +1,23 @@
 import os
-import zipfile
-import yaml
 import tempfile
+import zipfile
 import remarks
 from pathlib import Path
 from shutil import rmtree
-from pyzotero import zotero
-from webdav3.client import Client as wdClient
-from rmapi_shim import Rmapi
+from tqdm import tqdm
 from config_functions import load_config
+from rmapi_shim import Rmapi
 from utils import *
 
 
 class SyncFile:
     def __init__(self, conf_file):
         self.temp_path = Path(tempfile.gettempdir() / "zot2rm")
-        temp_path.mkdir(parents=True, exist_ok=True)
+        self.temp_path.mkdir(parents=True, exist_ok=True)
         self.zot, self.webdav, self.folders = load_config(conf_file)
         self.rmapi = Rmapi(self.temp_path)
-        self.read_folder_path = f"/Zotero/{folders['read']}/"
-        self.unread_folder_path = f"/Zotero/{folders['unread']}/"
-
+        self.read_folder_path = f"/Zotero/{self.folders['read']}/"
+        self.unread_folder_path = f"/Zotero/{self.folders['unread']}/"
 
     def sync_to_rm(self, item):
         item_id = item["key"]
@@ -32,9 +29,11 @@ class SyncFile:
                 print(f"Processing {attachment_name}...")
 
                 # Get actual file and repack it in reMarkable's file format
-                file_name = self.zot.dump(attachment_id, path=temp_path)
+                file_name = self.zot.dump(attachment_id, path=self.temp_path)
                 if file_name:
                     upload = self.rmapi.upload_file(file_name, self.unread_folder_path)
+                else:
+                    upload = False
                 if upload:
                     self.zot.add_tags(item, "synced")
                     os.remove(file_name)
@@ -46,8 +45,7 @@ class SyncFile:
             else:
                 print("Found attachment, but it's not a PDF, skipping...")
                 return False
-        
-       
+
     def sync_to_rm_webdav(self, item):
         item_id = item["key"]
         attachments = self.zot.children(item_id)
@@ -64,7 +62,7 @@ class SyncFile:
                 self.webdav.download_sync(remote_path=file_name, local_path=file_path)
                 with zipfile.ZipFile(file_path) as zf:
                     zf.extractall(unzip_path)
-                if (unzip_path / attachment_name ).is_file():
+                if (unzip_path / attachment_name).is_file():
                     uploader = self.rmapi.upload_file(str(unzip_path / attachment_name), self.unread_folder_path)
                 else:
                     """ #TODO: Sometimes Zotero does not seem to rename attachments properly,
@@ -86,7 +84,6 @@ class SyncFile:
                 print("Found attachment, but it's not a PDF, skipping...")
                 return False
 
-
     def download_from_rm(self, entity, folder):
         print(f"Processing {entity}...")
         zip_name = f"{entity}.zip"
@@ -103,9 +100,9 @@ class SyncFile:
 
         renderer = remarks
         args = {"combined_pdf": True, "combined_md": False, "ann_type": ["scribbles", "highlights"]}
-        renderer.run_remarks(unzip_path, temp_path, **args)
+        renderer.run_remarks(unzip_path, self.temp_path, **args)
         print("PDF rendered")
-        pdf = (temp_path / f"{entity} _remarks.pdf")
+        pdf = (self.temp_path / f"{entity} _remarks.pdf")
         pdf = pdf.rename(pdf.with_stem(f"{entity}"))
         pdf_name = pdf.name
 
@@ -113,7 +110,6 @@ class SyncFile:
         file_path.unlink()
         rmtree(unzip_path)
         return pdf_name
-
 
     def zotero_upload(self, pdf_name):
         for item in self.zot.items(tag="synced"):
@@ -126,13 +122,12 @@ class SyncFile:
                     pdf_name.rename(new_pdf_name)
                     upload = self.zot.attachment_simple([new_pdf_name], item_id)
 
-                    if upload["success"] != []:
+                    if upload["success"]:
                         print(f"{pdf_name} uploaded to Zotero.")
                         return True
                     else:
                         print(f"Upload of {pdf_name} failed...")
                         return False
-
 
     def zotero_upload_webdav(self, pdf_name):
         item_template = self.zot.item_template("attachment", "imported_file")
@@ -147,7 +142,7 @@ class SyncFile:
                     filled_item_template = fill_template(item_template, pdf_name)
                     create_attachment = self.zot.create_items([filled_item_template], item_id)
 
-                    if create_attachment["success"] != []:
+                    if create_attachment["success"]:
                         key = create_attachment["success"]["0"]
                     else:
                         print("Failed to create attachment, aborting...")
@@ -183,11 +178,10 @@ class SyncFile:
 
                     self.zot.add_tags(item, "read")
                     print(f"{pdf_name.name} uploaded to Zotero.")
-                    (temp_path / pdf_name).unlink()
-                    (temp_path / attachment_zip).unlink()
-                    (temp_path / propfile).unlink()
+                    (self.temp_path / pdf_name).unlink()
+                    (self.temp_path / attachment_zip).unlink()
+                    (self.temp_path / propfile).unlink()
                     return pdf_name
-                
 
     def get_sync_status(self):
         read_list = []
@@ -207,7 +201,6 @@ class SyncFile:
             else:
                 self.sync_to_rm(item)
         self.zot.delete_tags("to_sync")
-
 
     def pull(self):
         files_list = self.rmapi.get_files(self.read_folder_path)

@@ -1,14 +1,13 @@
 from hashlib import md5
 from datetime import datetime
-from webdav3.client import Client as wdClient
 from time import sleep
 
 
 def get_md5(pdf):
     if pdf.is_file():
         with open(pdf, "rb") as f:
-            bytes = f.read()
-            md5_sum = md5(bytes).hexdigest()
+            f_bytes = f.read()
+            md5_sum = md5(f_bytes).hexdigest()
     else:
         md5_sum = None
     return md5_sum

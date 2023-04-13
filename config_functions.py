@@ -1,7 +1,7 @@
 import yaml
-from pathlib import Path
 from pyzotero import zotero
 from webdav3.client import Client as wdClient
+
 
 def load_config(config_file):
     with open(config_file, "r") as stream:
@@ -21,7 +21,7 @@ def load_config(config_file):
         webdav = wdClient(webdav_data)
     else:
         webdav = False
-    return (zot, webdav, folders)
+    return zot, webdav, folders
 
 
 def write_config(file_name):
@@ -41,4 +41,3 @@ def write_config(file_name):
     with open(file_name, "w") as file:
         yaml.dump(config_data, file)
     print(f"Config written to {file_name}\n If something went wrong, please edit config manually.")
-
