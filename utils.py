@@ -30,7 +30,7 @@ def webdav_uploader(webdav, remote_path, local_path):
     for i in range(3):
         try:
             webdav.upload_sync(remote_path=remote_path, local_path=local_path)
-        except:
+        except webdav.NoConnection or webdav.ConnectionException:
             sleep(5)
         else:
             return True
