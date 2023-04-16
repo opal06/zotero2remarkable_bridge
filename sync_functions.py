@@ -12,7 +12,7 @@ from utils import *
 
 class SyncFile:
     def __init__(self, conf_file):
-        self.temp_path = Path(tempfile.gettempdir() / "zot2rm")
+        self.temp_path = Path(tempfile.gettempdir()) / "zot2rm"
         self.temp_path.mkdir(parents=True, exist_ok=True)
         self.zot, self.webdav, self.folders = load_config(conf_file)
         self.rmapi = Rmapi(self.temp_path)
@@ -84,12 +84,12 @@ class SyncFile:
                 print("Found attachment, but it's not a PDF, skipping...")
                 return False
 
-    def download_from_rm(self, entity, folder):
+    def download_from_rm(self, entity):
         print(f"Processing {entity}...")
         zip_name = f"{entity}.zip"
         file_path = self.temp_path / zip_name
         unzip_path = self.temp_path / f"{entity}-unzipped"
-        download = self.rmapi.download_file(f"{folder}{entity}")
+        download = self.rmapi.download_file(f"{self.read_folder_path}{entity}")
         if download:
             print("File downloaded")
         else:
@@ -206,7 +206,7 @@ class SyncFile:
         files_list = self.rmapi.get_files(self.read_folder_path)
         if files_list:
             for entity in tqdm(files_list):
-                pdf_name = self.download_from_rm(entity, self.read_folder_path)
+                pdf_name = self.download_from_rm(entity)
                 if self.webdav:
                     self.zotero_upload_webdav(pdf_name)
                 else:
