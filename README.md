@@ -31,6 +31,10 @@ Dependency on rmapy has been removed and the program now relies on [rmapi](https
 
 ### Setup
 
+On reMarkable:
+- Create a folder named `Zotero` through the UI on your reMarkable. This folder must be on the top level of the file system and cannot be nested under other folders.
+- Create two folders inside the `Zotero` folder, one for your unread documents (this is where new files from Zotero will land) and your read documents (this is where the program looks for files to be synced back to Zotero). 
+
 ```bash
 # 1. Clone repository to your computer:
 git clone https://github.com/opal06/zotero2remarkable_bridge.git
