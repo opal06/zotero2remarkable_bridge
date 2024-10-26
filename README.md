@@ -48,11 +48,14 @@ git clone https://github.com/opal06/zotero2remarkable_bridge.git
 # 2. Add required packages through pip:
 pip3 install -r requirements.txt
 
-# 3. Allow execution of the program:
+# 3. (Only on Linux) Allow execution of the program:
 sudo chmod +x zotero2remarkable_bridge.py
 
-# 4. Run the program with:
+# 4. On Linux, run the program with:
 ./zotero2remarkable_bridge.py
+
+# Or on any other OS with:
+python3 zotero2remarkable_bridge.py
 
 # At first run, it will guide you through creating a working
 # config. It will help you setup authentication with Zotero, WebDAV (optional), and
