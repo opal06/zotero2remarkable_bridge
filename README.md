@@ -27,7 +27,10 @@ Entries that have been synced back will have the tag "read" added to them, so yo
 
 ### Support for new reMarkable cloud API
 ~~Due to changes made by reMarkable to its cloud API that have not yet been implemented in [rmapy](https://github.com/subutux/rmapy/), on which this program relies, some users may have issues getting this program to work. This will mostly affect users that have signed up for the cloud after the API change.~~
-Dependency on rmapy has been removed and the program now relies on [rmapi](https://github.com/juruen/rmapi) by default, as it has been proven functional and allows to support the new reMarkable cloud API without sacrificing backwards compatibility to the older API. Therefore, a working install of `rmapi` is now required. 
+Dependency on rmapy has been removed and the program now relies on [rmapi](https://github.com/ddvk/rmapi) by default, as it has been proven functional and allows to support the new reMarkable cloud API without sacrificing backwards compatibility to the older API. Therefore, a working install of `rmapi` is now required. 
+
+> [!IMPORTANT]
+> The [original version](https://github.com/juruen/rmapi) of `rmapi` by juruen has been discontinued, but a working [fork](https://github.com/ddvk/rmapi) maintained by ddvk now exists and should be used instead.
 
 ### Setup
 
