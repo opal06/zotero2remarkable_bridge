@@ -28,6 +28,8 @@ def sync_to_rm(item, zot, folders):
             file_name = zot.dump(attachment_id, path=temp_path)
             if file_name:
                 upload = rmapi.upload_file(file_name, f"/Zotero/{folders['unread']}")
+            else: 
+                upload = None
             if upload:
                 zot.add_tags(item, "synced")
                 os.remove(file_name)
