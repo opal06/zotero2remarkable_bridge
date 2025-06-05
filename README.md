@@ -1,5 +1,5 @@
 >[!IMPORTANT]
->This project has been deprecated and will be no longer maintained or updated. You can use this improved and actively maintained [fork](https://github.com/Scrybbling-together/zotero2remarkable_bridge) instead. Thanks to everybody who used this program or found it useful!
+>This project has been deprecated and will no longer be maintained or updated. You can use this improved and actively maintained [fork](https://github.com/Scrybbling-together/zotero2remarkable_bridge) instead. Thanks to everybody who used this program or found it useful!
 
 
 # Zotero2reMarkable Bridge
